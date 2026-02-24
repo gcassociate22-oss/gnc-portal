@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>G&amp;C Associates Portal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans','Segoe UI',sans-serif;background:#080810;color:#dde0f0;min-height:100vh;}
+    ::-webkit-scrollbar{width:4px;height:4px;}
+    ::-webkit-scrollbar-track{background:#0d0d18;}
+    ::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:2px;}
+    .tab-btn{background:none;border:none;cursor:pointer;color:#555;font-family:inherit;font-size:13px;font-weight:500;padding:9px 12px;border-radius:8px;display:flex;align-items:center;gap:9px;transition:all 0.18s;width:100%;text-align:left;margin-bottom:2px;}
+    .tab-btn:hover{background:#141420;color:#c0c0e0;}
+    .tab-btn.active{background:#141420;color:#a78bfa;font-weight:600;}
+    .card{background:#0f0f1a;border:1px solid #1e1e30;border-radius:12px;padding:20px;transition:border 0.2s;}
+    .emp-card{transition:transform 0.15s,border 0.2s;}
+    .emp-card:hover{transform:translateY(-2px);border-color:#3a2a5a!important;}
+    .card-title{font-size:11px;font-weight:700;color:#606080;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;}
+    .page-title{font-size:22px;font-weight:800;color:#e8e8f8;margin-bottom:4px;font-family:Georgia,serif;}
+    .page-sub{font-size:13px;color:#555;margin-bottom:20px;}
+    .stat-card{background:#0f0f1a;border:1px solid #1e1e30;border-radius:12px;padding:18px;}
+    .btn{border:none;border-radius:8px;padding:9px 18px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.18s;}
+    .btn-primary{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+    .btn-danger{background:#200808!important;color:#f87171!important;border:1px solid #3a1010!important;}
+    .btn-danger:hover{background:#2a0a0a!important;}
+    .btn-sm{padding:5px 12px!important;font-size:12px!important;}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+    .input{background:#141420;border:1px solid #1e1e30;border-radius:8px;color:#dde0f0;font-family:inherit;font-size:13px;padding:10px 14px;width:100%;outline:none;transition:border 0.2s;}
+    .input:focus{border-color:#7c3aed;}
+    textarea.input{resize:vertical;min-height:84px;}
+    select.input option{background:#141420;}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(8px);}
+    .modal{background:#0f0f1a;border:1px solid #2a2a40;border-radius:16px;padding:28px;width:90%;max-width:480px;max-height:90vh;overflow-y:auto;animation:popIn 0.2s ease;}
+    .modal-title{font-size:18px;font-weight:800;color:#e0e0f5;margin-bottom:20px;font-family:Georgia,serif;}
+    .att-btn{border:1px solid #1e1e30;background:#141420;color:#555;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;font-family:inherit;}
+    .att-btn:hover:not(:disabled){border-color:#3a3a55;color:#aaa;}
+    .att-btn:disabled{cursor:not-allowed;opacity:0.5;}
+    .att-btn.present{background:#05200e;border-color:#10b981;color:#10b981;}
+    .att-btn.absent{background:#200505;border-color:#ef4444;color:#ef4444;}
+    .att-btn.halfday{background:#1c1000;border-color:#f59e0b;color:#f59e0b;}
+    .att-btn.wfh{background:#001622;border-color:#0ea5e9;color:#0ea5e9;}
+    .filter-btn{background:#141420;border:1px solid #1e1e30;color:#666;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;font-family:inherit;}
+    .filter-btn:hover{color:#aaa;border-color:#3a3a55;}
+    .filter-btn.active{background:#1e1030;border-color:#7c3aed;color:#a78bfa;}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.95)}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const SUPABASE_URL = "https://myaoxovhlnzdutxbsncn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_S2FacjVkNQjf5MmWycDsXQ_yaR_o9eT";
+const H = {
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Prefer": "return=representation",
+};
+
+const db = {
+  get: async (table, q="") => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}&order=created_at.desc`, {headers:H});
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  post: async (table, body) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {method:"POST",headers:H,body:JSON.stringify(body)});
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  patch: async (table, match, body) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${match}`, {method:"PATCH",headers:{...H,"Prefer":"return=representation"},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  del: async (table, match) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${match}`, {method:"DELETE",headers:H});
+    if(!r.ok) throw new Error(await r.text());
+  },
+  upsert: async (table, body, onConflict) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`, {
+      method:"POST", headers:{...H,"Prefer":"resolution=merge-duplicates,return=representation"}, body:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+};
+
+const TABS = [
+  {id:"dashboard",label:"Dashboard",icon:"⊞"},
+  {id:"policies",label:"Policies",icon:"📋"},
+  {id:"attendance",label:"Attendance",icon:"✅"},
+  {id:"holidays",label:"Holidays",icon:"🗓"},
+  {id:"calendar",label:"Calendar",icon:"📅"},
+  {id:"announcements",label:"Announcements",icon:"📢"},
+  {id:"directory",label:"Directory",icon:"👥"},
+  {id:"leaves",label:"Leave Requests",icon:"🏖"},
+  {id:"documents",label:"Documents",icon:"📁"},
+];
+
+const TC = {National:"#f59e0b",Festival:"#ec4899",Religious:"#8b5cf6",Optional:"#10b981",Company:"#3b82f6"};
+const PC = {high:"#ef4444",medium:"#f59e0b",low:"#10b981"};
+const LC = {pending:"#f59e0b",approved:"#10b981",rejected:"#ef4444"};
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS7 = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DOC_CATS = ["HR","Finance","Legal","Operations","Engineering","Marketing","General"];
+const POL_CATS = ["General","Work Arrangements","Benefits","Safety","IT","Finance","Legal"];
+const LV_TYPES = ["Annual","Sick","Casual","Maternity","Paternity","Unpaid","Other"];
+const GRADS = ["linear-gradient(135deg,#7c3aed,#ec4899)","linear-gradient(135deg,#0ea5e9,#6366f1)","linear-gradient(135deg,#10b981,#0ea5e9)","linear-gradient(135deg,#f59e0b,#ef4444)","linear-gradient(135deg,#8b5cf6,#06b6d4)"];
+
+const todayISO = () => new Date().toISOString().split("T")[0];
+const ag = (s) => GRADS[(s?.charCodeAt(0)||0) % GRADS.length];
+const fmtD = (d) => d ? new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "";
+
+function App() {
+  const [tab, setTab] = useState("dashboard");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [search, setSearch] = useState("");
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [leaveFilter, setLeaveFilter] = useState("all");
+  const [docFilter, setDocFilter] = useState("All");
+  const [notif, setNotif] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentEmp, setCurrentEmp] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [policies, setPolicies] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [adminPin, setAdminPin] = useState("1234");
+
+  const toast = (msg, type="success") => { setNotif({msg,type}); setTimeout(()=>setNotif(null),3000); };
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [emps,pols,hols,anns,atts,lvs,docs,sets] = await Promise.all([
+        db.get("employees","status=eq.active"),
+        db.get("policies"),
+        db.get("holidays","order=date.asc"),
+        db.get("announcements"),
+        db.get("attendance",`date=eq.${todayISO()}`),
+        db.get("leave_requests"),
+        db.get("documents"),
+        db.get("settings","id=eq.1"),
+      ]);
+      setEmployees(emps||[]);
+      setPolicies(pols||[]);
+      setHolidays((hols||[]).sort((a,b)=>a.date.localeCompare(b.date)));
+      setAnnouncements(anns||[]);
+      setAttendance(atts||[]);
+      setLeaves(lvs||[]);
+      setDocuments(docs||[]);
+      if(sets?.[0]?.admin_pin) setAdminPin(sets[0].admin_pin);
+    } catch(e) { toast("Connection error. Check Supabase setup.","error"); }
+    setLoading(false);
+  }, []);
+
+  useEffect(()=>{ loadAll(); },[loadAll]);
+
+  useEffect(()=>{
+    if(tab==="attendance"||tab==="dashboard")
+      db.get("attendance",`date=eq.${todayISO()}`).then(d=>setAttendance(d||[])).catch(()=>{});
+  },[tab]);
+
+  const closeModal = () => { setModal(null); setForm({}); setPinError(""); };
+  const openModal = (type, payload={}) => { setModal({type,payload}); setForm(payload.prefill||{}); };
+
+  const getAtt = (eid) => attendance.find(a=>a.emp_id===eid)?.status||null;
+
+  const markAtt = async (eid, ename, status) => {
+    try {
+      const existing = attendance.find(a=>a.emp_id===eid);
+      if(existing && existing.status===status) {
+        await db.del("attendance",`emp_id=eq.${eid}&date=eq.${todayISO()}`);
+        setAttendance(p=>p.filter(a=>a.emp_id!==eid));
+        toast(`Cleared for ${ename}`);
+      } else {
+        const rec = await db.upsert("attendance",{emp_id:eid,emp_name:ename,date:todayISO(),status},"emp_id,date");
+        setAttendance(p=>[...p.filter(a=>a.emp_id!==eid),...(Array.isArray(rec)?rec:[rec])]);
+        toast(`Marked ${status} for ${ename}`);
+      }
+    } catch(e){ toast("Failed to mark attendance","error"); }
+  };
+
+  const presentToday = employees.filter(e=>getAtt(e.id)==="present").length;
+  const pendingLvs = leaves.filter(l=>l.status==="pending").length;
+  const upHols = holidays.filter(h=>h.date>=todayISO()).slice(0,4);
+  const holMap = {};
+  holidays.forEach(h=>{ holMap[h.date]=h; });
+
+  const tryLogin = async () => {
+    if(pinInput===adminPin){ setIsAdmin(true);setPinInput("");setPinError("");closeModal();toast("Admin mode ON ✓"); }
+    else setPinError("Incorrect PIN. Try again.");
+  };
+
+  const addRec = async (table, body, setter) => {
+    try {
+      const rec = await db.post(table, body);
+      const item = Array.isArray(rec)?rec[0]:rec;
+      setter(p=>[item,...p].filter(Boolean));
+      closeModal(); toast("Saved ✓");
+    } catch(e){ toast("Save failed: "+e.message,"error"); }
+  };
+
+  const delRec = async (table, id, setter) => {
+    try {
+      await db.del(table,`id=eq.${id}`);
+      setter(p=>p.filter(i=>i.id!==id));
+      toast("Deleted ✓");
+    } catch(e){ toast("Delete failed","error"); }
+  };
+
+  const updateLv = async (id, status) => {
+    try {
+      await db.patch("leave_requests",`id=eq.${id}`,{status});
+      setLeaves(p=>p.map(l=>l.id===id?{...l,status}:l));
+      toast(`Leave ${status} ✓`);
+    } catch(e){ toast("Update failed","error"); }
+  };
+
+  const changePin = async () => {
+    if(!form.pin||form.pin!==form.pin2){toast("PINs don't match","error");return;}
+    try {
+      await db.patch("settings","id=eq.1",{admin_pin:form.pin});
+      setAdminPin(form.pin);closeModal();toast("PIN updated ✓");
+    } catch(e){ toast("Failed","error"); }
+  };
+
+  const todayFull = new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+
+  if(loading) return (
+    <div style={{background:"#080810",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <div style={{width:48,height:48,background:"linear-gradient(135deg,#7c3aed,#ec4899)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,animation:"pulse 1.5s ease-in-out infinite"}}>⚡</div>
+      <div style={{color:"#555",fontSize:14,fontFamily:"Georgia,serif",letterSpacing:0.5}}>Loading G&amp;C Associates Portal…</div>
+    </div>
+  );
+
+  return (
+    <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:"#080810",minHeight:"100vh",color:"#dde0f0"}}>
+
+      {notif && (
+        <div style={{position:"fixed",top:20,right:20,zIndex:999,background:notif.type==="error"?"#2a0808":"#051a0e",border:`1px solid ${notif.type==="error"?"#ef4444":"#10b981"}`,color:notif.type==="error"?"#f87171":"#34d399",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:600,boxShadow:"0 4px 32px #0009",animation:"slideIn 0.3s ease"}}>
+          {notif.type==="error"?"✕ ":"✓ "}{notif.msg}
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header style={{background:"#0d0d18",borderBottom:"1px solid #1e1e30",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:50}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:36,height:36,background:"linear-gradient(135deg,#7c3aed,#ec4899)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:"#fff"}}>G</div>
+          <div>
+            <div style={{fontFamily:"Georgia,serif",fontSize:17,fontWeight:700,color:"#f0f0ff"}}>G&amp;C Associates</div>
+            <div style={{fontSize:10,color:"#444",letterSpacing:0.5}}>Company Portal · Live</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          {!currentEmp
+            ? <button className="btn btn-sm" style={{background:"#1a1a28",color:"#aaa",border:"1px solid #2a2a3a"}} onClick={()=>openModal("selectEmp")}>👤 Who are you?</button>
+            : <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:ag(currentEmp.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700}}>{currentEmp.name[0]}</div>
+                <span style={{fontSize:13,color:"#aaa"}}>{currentEmp.name}</span>
+                <button className="btn btn-sm" style={{background:"none",border:"none",color:"#555",fontSize:12}} onClick={()=>setCurrentEmp(null)}>✕</button>
+              </div>
+          }
+          {isAdmin
+            ? <button className="btn btn-sm" style={{background:"#1e0a35",color:"#c084fc",border:"1px solid #4a0088"}} onClick={()=>{setIsAdmin(false);toast("Admin mode OFF");}}>🔐 Admin ON</button>
+            : <button className="btn btn-sm" style={{background:"#1a1a28",color:"#888",border:"1px solid #2a2a3a"}} onClick={()=>openModal("adminLogin")}>🔑 Admin</button>
+          }
+          <button className="btn btn-sm" style={{background:"#1a1a28",color:"#666",border:"1px solid #1e1e30"}} onClick={loadAll} title="Refresh">↺</button>
+        </div>
+      </header>
+
+      <div style={{display:"flex",minHeight:"calc(100vh - 60px)"}}>
+        {/* SIDEBAR */}
+        <nav style={{width:200,background:"#0d0d18",borderRight:"1px solid #1e1e30",padding:"16px 10px",flexShrink:0,position:"sticky",top:60,alignSelf:"flex-start",height:"calc(100vh - 60px)",overflowY:"auto"}}>
+          {TABS.map(t=>(
+            <button key={t.id} className={`tab-btn ${tab===t.id?"active":""}`} onClick={()=>{setTab(t.id);setSearch("");}}>
+              <span style={{fontSize:14}}>{t.icon}</span>
+              <span>{t.label}</span>
+              {t.id==="leaves"&&pendingLvs>0&&<span style={{marginLeft:"auto",background:"#ef4444",color:"#fff",borderRadius:20,fontSize:10,fontWeight:700,padding:"1px 6px"}}>{pendingLvs}</span>}
+            </button>
+          ))}
+          {isAdmin && <>
+            <div style={{marginTop:16,padding:"6px 10px 4px",fontSize:10,color:"#333",textTransform:"uppercase",letterSpacing:1}}>Admin</div>
+            <button className="tab-btn" style={{color:"#8b5cf6"}} onClick={()=>openModal("changePin")}>🔑 Change PIN</button>
+            <button className="tab-btn" style={{color:"#0ea5e9"}} onClick={()=>openModal("addEmployee")}>➕ Add Employee</button>
+          </>}
+        </nav>
+
+        {/* MAIN */}
+        <main style={{flex:1,padding:24,overflowY:"auto"}}>
+
+          {/* DASHBOARD */}
+          {tab==="dashboard" && (
+            <div>
+              <div className="page-title">Good day! 👋</div>
+              <div className="page-sub">G&amp;C Associates · {todayFull}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:24}}>
+                {[
+                  {label:"Employees",val:employees.length,icon:"👥",c:"#7c3aed"},
+                  {label:"Present Today",val:presentToday,icon:"✅",c:"#10b981"},
+                  {label:"Pending Leaves",val:pendingLvs,icon:"🏖",c:"#f59e0b"},
+                  {label:"Policies",val:policies.length,icon:"📋",c:"#0ea5e9"},
+                  {label:"Documents",val:documents.length,icon:"📁",c:"#ec4899"},
+                  {label:"Holidays Left",val:upHols.length,icon:"🗓",c:"#8b5cf6"},
+                ].map(s=>(
+                  <div key={s.label} className="stat-card" style={{borderTop:`3px solid ${s.c}`}}>
+                    <div style={{fontSize:20,marginBottom:6}}>{s.icon}</div>
+                    <div style={{fontSize:28,fontWeight:800,color:s.c,lineHeight:1.1}}>{s.val}</div>
+                    <div style={{fontSize:11,color:"#555",marginTop:3}}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                <div className="card">
+                  <div className="card-title">🗓 Upcoming Holidays</div>
+                  {upHols.length===0&&<div style={{color:"#444",fontSize:13}}>No upcoming holidays.</div>}
+                  {upHols.map(h=>(
+                    <div key={h.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid #12121e"}}>
+                      <div><div style={{fontSize:13,fontWeight:600}}>{h.name}</div><div style={{fontSize:11,color:"#555"}}>{fmtD(h.date)}</div></div>
+                      <span className="badge" style={{background:(TC[h.type]||"#7c3aed")+"22",color:TC[h.type]||"#7c3aed"}}>{h.type}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="card">
+                  <div className="card-title">📢 Announcements</div>
+                  {announcements.slice(0,4).map(a=>(
+                    <div key={a.id} style={{padding:"8px 0",borderBottom:"1px solid #12121e"}}>
+                      <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:3}}>
+                        <span className="badge" style={{background:(PC[a.priority]||"#888")+"22",color:PC[a.priority]||"#888"}}>{a.priority?.toUpperCase()}</span>
+                        <span style={{fontSize:13,fontWeight:600}}>{a.title}</span>
+                      </div>
+                      <div style={{fontSize:12,color:"#555"}}>{fmtD(a.date)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="card">
+                  <div className="card-title">✅ Today's Attendance</div>
+                  {employees.slice(0,6).map(e=>{
+                    const s=getAtt(e.id);
+                    return (
+                      <div key={e.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #12121e"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{width:26,height:26,borderRadius:"50%",background:ag(e.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700}}>{e.name[0]}</div>
+                          <span style={{fontSize:13}}>{e.name}</span>
+                        </div>
+                        <span className="badge" style={{background:s==="present"?"#05200e":s==="absent"?"#200505":s==="halfday"?"#1c1000":s==="wfh"?"#001622":"#1a1a28",color:s==="present"?"#10b981":s==="absent"?"#ef4444":s==="halfday"?"#f59e0b":s==="wfh"?"#0ea5e9":"#444"}}>{s||"—"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="card">
+                  <div className="card-title">🏖 Pending Leaves</div>
+                  {leaves.filter(l=>l.status==="pending").slice(0,5).map(l=>(
+                    <div key={l.id} style={{padding:"8px 0",borderBottom:"1px solid #12121e"}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{l.emp_name}</div>
+                      <div style={{fontSize:12,color:"#666"}}>{l.type} · {fmtD(l.from_date)} → {fmtD(l.to_date)}</div>
+                    </div>
+                  ))}
+                  {leaves.filter(l=>l.status==="pending").length===0&&<div style={{fontSize:13,color:"#444"}}>No pending requests ✓</div>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* POLICIES */}
+          {tab==="policies" && (
+            <div>
+              <PH title="Company Policies" sub="Official guidelines & rules" action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addPolicy")}>+ Add Policy</button>}/>
+              <input className="input" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:360,marginBottom:16}}/>
+              {policies.filter(p=>p.title?.toLowerCase().includes(search.toLowerCase())).map(p=>(
+                <div key={p.id} className="card" style={{marginBottom:12,borderLeft:`4px solid ${TC[p.category]||"#7c3aed"}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                        <span style={{fontSize:15,fontWeight:700}}>{p.title}</span>
+                        <span className="badge" style={{background:"#1e1e30",color:"#777"}}>{p.category}</span>
+                      </div>
+                      <div style={{fontSize:13,color:"#777",lineHeight:1.7}}>{p.content}</div>
+                      <div style={{fontSize:11,color:"#444",marginTop:6}}>Updated: {fmtD(p.date)}</div>
+                    </div>
+                    {isAdmin&&<button className="btn btn-danger btn-sm" style={{marginLeft:14,flexShrink:0}} onClick={()=>delRec("policies",p.id,setPolicies)}>Delete</button>}
+                  </div>
+                </div>
+              ))}
+              {policies.length===0&&<Empty text="No policies yet."/>}
+            </div>
+          )}
+
+          {/* ATTENDANCE */}
+          {tab==="attendance" && (
+            <div>
+              <PH title="Attendance" sub={`Today — ${todayFull}`}/>
+              {!currentEmp&&!isAdmin&&<IB text="👤 Select your name (top right) to mark your own attendance."/>}
+              <div style={{display:"grid",gap:10,marginBottom:24}}>
+                {employees.map(emp=>{
+                  const s=getAtt(emp.id);
+                  const can=isAdmin||(currentEmp&&currentEmp.id===emp.id);
+                  return (
+                    <div key={emp.id} className="card" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,opacity:can?1:0.6}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{width:42,height:42,borderRadius:"50%",background:ag(emp.name),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:17,flexShrink:0}}>{emp.name[0]}</div>
+                        <div><div style={{fontWeight:600,fontSize:14}}>{emp.name}</div><div style={{fontSize:12,color:"#666"}}>{emp.role} · {emp.dept}</div></div>
+                      </div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {["present","absent","halfday","wfh"].map(st=>(
+                          <button key={st} disabled={!can} className={`att-btn ${s===st?st:""}`} onClick={()=>can&&markAtt(emp.id,emp.name,st)}>
+                            {st==="present"?"✓ Present":st==="absent"?"✗ Absent":st==="halfday"?"½ Half Day":"🏠 WFH"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {employees.length===0&&<Empty text="No employees yet. Admin can add employees."/>}
+            </div>
+          )}
+
+          {/* HOLIDAYS */}
+          {tab==="holidays" && (
+            <div>
+              <PH title="Public Holidays" sub="Official holidays & observances" action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addHoliday")}>+ Add Holiday</button>}/>
+              {!isAdmin&&<IB text="🔒 Admin login required to add or remove holidays."/>}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:12}}>
+                {holidays.map(h=>{
+                  const c=TC[h.type]||"#7c3aed";
+                  const past=h.date<todayISO();
+                  return (
+                    <div key={h.id} className="card" style={{opacity:past?0.45:1,borderTop:`3px solid ${c}`}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                        <span className="badge" style={{background:c+"22",color:c}}>{h.type}</span>
+                        {past&&<span style={{fontSize:10,color:"#444"}}>Past</span>}
+                      </div>
+                      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{h.name}</div>
+                      <div style={{fontSize:12,color:"#666"}}>{new Date(h.date+"T00:00:00").toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+                      {isAdmin&&<div style={{marginTop:12,textAlign:"right"}}><button className="btn btn-danger btn-sm" onClick={()=>delRec("holidays",h.id,setHolidays)}>Remove</button></div>}
+                    </div>
+                  );
+                })}
+              </div>
+              {holidays.length===0&&<Empty text="No holidays added yet."/>}
+            </div>
+          )}
+
+          {/* CALENDAR */}
+          {tab==="calendar" && (
+            <div>
+              <PH title="Yearly Calendar" sub={`${calYear} · Holidays highlighted`} action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addHoliday")}>+ Add Holiday</button>}/>
+              {!isAdmin&&<IB text="🔒 Only admin can add or remove holidays."/>}
+              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+                <button className="btn" style={{background:"#1a1a28",color:"#aaa"}} onClick={()=>setCalYear(y=>y-1)}>← {calYear-1}</button>
+                <span style={{fontSize:22,fontWeight:800,color:"#e0e0f0",fontFamily:"Georgia,serif"}}>{calYear}</span>
+                <button className="btn" style={{background:"#1a1a28",color:"#aaa"}} onClick={()=>setCalYear(y=>y+1)}>{calYear+1} →</button>
+              </div>
+              <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+                {Object.entries(TC).map(([k,c])=>(
+                  <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:11}}>
+                    <div style={{width:10,height:10,borderRadius:2,background:c}}></div>
+                    <span style={{color:"#666"}}>{k}</span>
+                  </div>
+                ))}
+                <div style={{display:"flex",alignItems:"center",gap:5,fontSize:11}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:"#3b82f6"}}></div>
+                  <span style={{color:"#666"}}>Today</span>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+                {MONTHS.map((mName,mIdx)=>{
+                  const days=new Date(calYear,mIdx+1,0).getDate();
+                  const first=new Date(calYear,mIdx,1).getDay();
+                  return (
+                    <div key={mIdx} className="card" style={{padding:14}}>
+                      <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#b0b0d0"}}>{mName} {calYear}</div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+                        {DAYS7.map(d=><div key={d} style={{fontSize:9,color:"#383860",textAlign:"center",paddingBottom:3}}>{d}</div>)}
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+                        {Array(first).fill(null).map((_,i)=><div key={i}></div>)}
+                        {Array(days).fill(null).map((_,i)=>{
+                          const d=i+1;
+                          const ds=`${calYear}-${String(mIdx+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+                          const hol=holMap[ds];
+                          const isToday=ds===todayISO();
+                          const dow=new Date(ds+"T00:00:00").getDay();
+                          const isWE=dow===0||dow===6;
+                          const hc=hol?(TC[hol.type]||"#7c3aed"):null;
+                          return (
+                            <div key={d} title={hol?hol.name:isWE?"Weekend":""}
+                              onClick={()=>hol&&isAdmin&&delRec("holidays",hol.id,setHolidays)}
+                              style={{aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:hol||isToday?700:400,borderRadius:4,cursor:hol&&isAdmin?"pointer":"default",
+                                background:isToday?"#1d3a6e":hol?hc+"22":"transparent",
+                                color:isToday?"#60a5fa":hol?hc:isWE?"#2a2a45":"#7070a0",
+                                border:isToday?"1px solid #3b82f6":hol?`1px solid ${hc}44`:"1px solid transparent",
+                                position:"relative"}}>
+                              {d}
+                              {hol&&<div style={{position:"absolute",bottom:1,left:"50%",transform:"translateX(-50%)",width:3,height:3,borderRadius:"50%",background:hc}}></div>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ANNOUNCEMENTS */}
+          {tab==="announcements" && (
+            <div>
+              <PH title="Announcements" sub="Company news & updates" action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addAnnouncement")}>+ Post</button>}/>
+              {announcements.map(a=>{
+                const c=PC[a.priority]||"#888";
+                return (
+                  <div key={a.id} className="card" style={{marginBottom:12,borderLeft:`4px solid ${c}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                          <span className="badge" style={{background:c+"22",color:c}}>{a.priority?.toUpperCase()}</span>
+                          <span style={{fontSize:15,fontWeight:700}}>{a.title}</span>
+                        </div>
+                        <div style={{fontSize:13,color:"#888",lineHeight:1.7}}>{a.content}</div>
+                        <div style={{fontSize:11,color:"#444",marginTop:6}}>Posted: {fmtD(a.date)}</div>
+                      </div>
+                      {isAdmin&&<button className="btn btn-danger btn-sm" style={{marginLeft:14,flexShrink:0}} onClick={()=>delRec("announcements",a.id,setAnnouncements)}>Delete</button>}
+                    </div>
+                  </div>
+                );
+              })}
+              {announcements.length===0&&<Empty text="No announcements yet."/>}
+            </div>
+          )}
+
+          {/* DIRECTORY */}
+          {tab==="directory" && (
+            <div>
+              <PH title="Employee Directory" sub="All team members" action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addEmployee")}>+ Add Employee</button>}/>
+              <input className="input" placeholder="Search by name or department…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:360,marginBottom:16}}/>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:12}}>
+                {employees.filter(e=>e.name?.toLowerCase().includes(search.toLowerCase())||e.dept?.toLowerCase().includes(search.toLowerCase())).map(emp=>(
+                  <div key={emp.id} className="card emp-card">
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+                      <div style={{width:48,height:48,borderRadius:"50%",background:ag(emp.name),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:20,flexShrink:0}}>{emp.name[0]}</div>
+                      <div><div style={{fontWeight:700,fontSize:15}}>{emp.name}</div><div style={{fontSize:12,color:"#777"}}>{emp.role}</div></div>
+                    </div>
+                    <div style={{fontSize:12,color:"#666",marginBottom:4}}>🏢 {emp.dept}</div>
+                    <div style={{fontSize:12,color:"#666",marginBottom:4}}>✉️ {emp.email}</div>
+                    {emp.join_date&&<div style={{fontSize:12,color:"#555",marginBottom:10}}>📅 Joined {fmtD(emp.join_date)}</div>}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span className="badge" style={{background:"#05200e",color:"#10b981"}}>Active</span>
+                      {isAdmin&&<button className="btn btn-danger btn-sm" onClick={()=>delRec("employees",emp.id,setEmployees)}>Remove</button>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {employees.length===0&&<Empty text="No employees yet. Admin can add employees."/>}
+            </div>
+          )}
+
+          {/* LEAVES */}
+          {tab==="leaves" && (
+            <div>
+              <PH title="Leave Requests" sub="Apply and manage leave" action={<button className="btn btn-primary" onClick={()=>openModal("addLeave")}>+ Apply Leave</button>}/>
+              <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+                {["all","pending","approved","rejected"].map(f=>(
+                  <button key={f} className={`filter-btn ${leaveFilter===f?"active":""}`} onClick={()=>setLeaveFilter(f)}>
+                    {f.charAt(0).toUpperCase()+f.slice(1)}
+                    {f!=="all"&&<span style={{marginLeft:5,background:(LC[f]||"#888")+"22",color:LC[f]||"#888",borderRadius:20,padding:"0 5px",fontSize:10}}>{leaves.filter(l=>l.status===f).length}</span>}
+                  </button>
+                ))}
+              </div>
+              {leaves.filter(l=>leaveFilter==="all"||l.status===leaveFilter).map(l=>{
+                const sc=LC[l.status]||"#888";
+                return (
+                  <div key={l.id} className="card" style={{marginBottom:10,borderLeft:`4px solid ${sc}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+                      <div>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                          <span style={{fontWeight:700,fontSize:15}}>{l.emp_name}</span>
+                          <span className="badge" style={{background:"#1e1e30",color:"#777"}}>{l.type}</span>
+                          <span className="badge" style={{background:sc+"22",color:sc}}>{l.status?.toUpperCase()}</span>
+                        </div>
+                        <div style={{fontSize:13,color:"#777",marginBottom:3}}>📅 {fmtD(l.from_date)} → {fmtD(l.to_date)}</div>
+                        <div style={{fontSize:13,color:"#666"}}>Reason: {l.reason}</div>
+                        <div style={{fontSize:11,color:"#444",marginTop:5}}>Applied: {fmtD(l.applied)}</div>
+                      </div>
+                      {isAdmin&&l.status==="pending"&&(
+                        <div style={{display:"flex",gap:8}}>
+                          <button className="btn btn-sm" style={{background:"#05200e",color:"#10b981",border:"1px solid #10b98144"}} onClick={()=>updateLv(l.id,"approved")}>✓ Approve</button>
+                          <button className="btn btn-danger btn-sm" onClick={()=>updateLv(l.id,"rejected")}>✗ Reject</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {leaves.filter(l=>leaveFilter==="all"||l.status===leaveFilter).length===0&&<Empty text="No leave requests found."/>}
+            </div>
+          )}
+
+          {/* DOCUMENTS */}
+          {tab==="documents" && (
+            <div>
+              <PH title="Documents Library" sub="Company files & resources" action={isAdmin&&<button className="btn btn-primary" onClick={()=>openModal("addDocument")}>+ Add Document</button>}/>
+              <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+                {["All",...DOC_CATS].map(f=>(
+                  <button key={f} className={`filter-btn ${docFilter===f?"active":""}`} onClick={()=>setDocFilter(f)}>{f}</button>
+                ))}
+              </div>
+              <input className="input" placeholder="Search documents…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:360,marginBottom:16}}/>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+                {documents.filter(d=>(docFilter==="All"||d.category===docFilter)&&d.name?.toLowerCase().includes(search.toLowerCase())).map(doc=>{
+                  const ext=doc.name?.split(".").pop()?.toLowerCase();
+                  const icon=ext==="pdf"?"📄":["xlsx","xls"].includes(ext)?"📊":["docx","doc"].includes(ext)?"📝":ext==="pptx"?"📑":"📁";
+                  return (
+                    <div key={doc.id} className="card emp-card">
+                      <div style={{display:"flex",gap:10,marginBottom:10}}>
+                        <div style={{fontSize:30,flexShrink:0}}>{icon}</div>
+                        <div><div style={{fontWeight:600,fontSize:14,lineHeight:1.4}}>{doc.name}</div><div style={{fontSize:11,color:"#555",marginTop:2}}>{doc.size}</div></div>
+                      </div>
+                      <div style={{fontSize:12,color:"#555",marginBottom:3}}>📂 {doc.category}</div>
+                      <div style={{fontSize:12,color:"#555",marginBottom:3}}>👤 {doc.uploader}</div>
+                      <div style={{fontSize:12,color:"#444",marginBottom:12}}>📅 {fmtD(doc.uploaded)}</div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        {doc.url&&doc.url!=="#"?<a href={doc.url} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#7c3aed",textDecoration:"none"}}>⬇ Download</a>:<span style={{fontSize:11,color:"#444"}}>No link</span>}
+                        {isAdmin&&<button className="btn btn-danger btn-sm" onClick={()=>delRec("documents",doc.id,setDocuments)}>Delete</button>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {documents.length===0&&<Empty text="No documents yet."/>}
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* MODALS */}
+      {modal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+
+            {modal.type==="adminLogin"&&<>
+              <div className="modal-title">🔑 Admin Login</div>
+              <p style={{fontSize:13,color:"#666",marginBottom:16}}>Enter your PIN to unlock admin access.</p>
+              <input className="input" type="password" placeholder="Enter PIN (default: 1234)" value={pinInput} onChange={e=>setPinInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryLogin()} style={{marginBottom:8}}/>
+              {pinError&&<div style={{fontSize:12,color:"#ef4444",marginBottom:8}}>{pinError}</div>}
+              <MA onCancel={closeModal} onOk={tryLogin} okLabel="Login"/>
+            </>}
+
+            {modal.type==="selectEmp"&&<>
+              <div className="modal-title">👤 Who are you?</div>
+              <p style={{fontSize:13,color:"#666",marginBottom:14}}>Select your name to mark attendance & apply leaves.</p>
+              <div style={{display:"grid",gap:8,maxHeight:280,overflowY:"auto"}}>
+                {employees.map(e=>(
+                  <button key={e.id} style={{background:"#141420",border:"1px solid #2a2a3a",borderRadius:8,padding:"10px 14px",color:"#dde0f0",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,fontFamily:"inherit",fontSize:13}} onClick={()=>{setCurrentEmp(e);closeModal();toast(`Welcome, ${e.name}!`);}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:ag(e.name),display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,flexShrink:0}}>{e.name[0]}</div>
+                    <div><div style={{fontWeight:600}}>{e.name}</div><div style={{fontSize:11,color:"#666"}}>{e.role} · {e.dept}</div></div>
+                  </button>
+                ))}
+              </div>
+              <div style={{marginTop:12}}><button className="btn" style={{background:"#1a1a28",color:"#666",border:"1px solid #2a2a3a",width:"100%"}} onClick={closeModal}>Cancel</button></div>
+            </>}
+
+            {modal.type==="changePin"&&<>
+              <div className="modal-title">🔑 Change PIN</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" type="password" placeholder="New PIN" value={form.pin||""} onChange={e=>setForm({...form,pin:e.target.value})}/>
+                <input className="input" type="password" placeholder="Confirm PIN" value={form.pin2||""} onChange={e=>setForm({...form,pin2:e.target.value})}/>
+                {form.pin&&form.pin2&&form.pin!==form.pin2&&<div style={{fontSize:12,color:"#ef4444"}}>PINs don't match.</div>}
+                <MA onCancel={closeModal} onOk={changePin} okLabel="Update PIN"/>
+              </div>
+            </>}
+
+            {modal.type==="addPolicy"&&<>
+              <div className="modal-title">📋 Add Policy</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" placeholder="Title *" value={form.title||""} onChange={e=>setForm({...form,title:e.target.value})}/>
+                <select className="input" value={form.category||""} onChange={e=>setForm({...form,category:e.target.value})}>
+                  <option value="">Category</option>{POL_CATS.map(c=><option key={c}>{c}</option>)}
+                </select>
+                <textarea className="input" placeholder="Content…" value={form.content||""} onChange={e=>setForm({...form,content:e.target.value})}/>
+                <input className="input" type="date" value={form.date||todayISO()} onChange={e=>setForm({...form,date:e.target.value})}/>
+                <MA onCancel={closeModal} onOk={()=>form.title&&addRec("policies",{title:form.title,category:form.category,content:form.content,date:form.date||todayISO()},setPolicies)} okLabel="Add"/>
+              </div>
+            </>}
+
+            {modal.type==="addHoliday"&&<>
+              <div className="modal-title">🗓 Add Holiday</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" placeholder="Holiday Name *" value={form.name||""} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="input" type="date" value={form.date||""} onChange={e=>setForm({...form,date:e.target.value})}/>
+                <select className="input" value={form.type||""} onChange={e=>setForm({...form,type:e.target.value})}>
+                  <option value="">Type</option>{Object.keys(TC).map(t=><option key={t}>{t}</option>)}
+                </select>
+                <MA onCancel={closeModal} onOk={()=>form.name&&form.date&&addRec("holidays",{name:form.name,date:form.date,type:form.type},(rec)=>setHolidays(p=>[...p,Array.isArray(rec)?rec[0]:rec].sort((a,b)=>a.date.localeCompare(b.date))))} okLabel="Add"/>
+              </div>
+            </>}
+
+            {modal.type==="addAnnouncement"&&<>
+              <div className="modal-title">📢 Post Announcement</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" placeholder="Title *" value={form.title||""} onChange={e=>setForm({...form,title:e.target.value})}/>
+                <textarea className="input" placeholder="Content…" value={form.content||""} onChange={e=>setForm({...form,content:e.target.value})}/>
+                <select className="input" value={form.priority||"medium"} onChange={e=>setForm({...form,priority:e.target.value})}>
+                  <option value="high">🔴 High</option><option value="medium">🟡 Medium</option><option value="low">🟢 Low</option>
+                </select>
+                <input className="input" type="date" value={form.date||todayISO()} onChange={e=>setForm({...form,date:e.target.value})}/>
+                <MA onCancel={closeModal} onOk={()=>form.title&&addRec("announcements",{title:form.title,content:form.content,priority:form.priority||"medium",date:form.date||todayISO()},setAnnouncements)} okLabel="Post"/>
+              </div>
+            </>}
+
+            {modal.type==="addEmployee"&&<>
+              <div className="modal-title">👤 Add Employee</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" placeholder="Full Name *" value={form.name||""} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="input" placeholder="Job Title / Role" value={form.role||""} onChange={e=>setForm({...form,role:e.target.value})}/>
+                <input className="input" placeholder="Department" value={form.dept||""} onChange={e=>setForm({...form,dept:e.target.value})}/>
+                <input className="input" placeholder="Email" value={form.email||""} onChange={e=>setForm({...form,email:e.target.value})}/>
+                <input className="input" type="date" value={form.join_date||""} onChange={e=>setForm({...form,join_date:e.target.value})}/>
+                <MA onCancel={closeModal} onOk={()=>form.name&&addRec("employees",{name:form.name,role:form.role,dept:form.dept,email:form.email,join_date:form.join_date,status:"active"},setEmployees)} okLabel="Add Employee"/>
+              </div>
+            </>}
+
+            {modal.type==="addLeave"&&<>
+              <div className="modal-title">🏖 Apply for Leave</div>
+              <div style={{display:"grid",gap:12}}>
+                <select className="input" value={form.emp_id||""} onChange={e=>{const emp=employees.find(x=>x.id===e.target.value);setForm({...form,emp_id:e.target.value,emp_name:emp?.name});}}>
+                  <option value="">Select Employee *</option>{employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+                <select className="input" value={form.type||""} onChange={e=>setForm({...form,type:e.target.value})}>
+                  <option value="">Leave Type *</option>{LV_TYPES.map(t=><option key={t}>{t}</option>)}
+                </select>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>From *</div><input className="input" type="date" value={form.from_date||""} onChange={e=>setForm({...form,from_date:e.target.value})}/></div>
+                  <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>To *</div><input className="input" type="date" value={form.to_date||""} onChange={e=>setForm({...form,to_date:e.target.value})}/></div>
+                </div>
+                <textarea className="input" placeholder="Reason…" value={form.reason||""} onChange={e=>setForm({...form,reason:e.target.value})}/>
+                <MA onCancel={closeModal} onOk={()=>form.emp_id&&form.type&&form.from_date&&addRec("leave_requests",{emp_id:form.emp_id,emp_name:form.emp_name,type:form.type,from_date:form.from_date,to_date:form.to_date,reason:form.reason,status:"pending",applied:todayISO()},setLeaves)} okLabel="Submit"/>
+              </div>
+            </>}
+
+            {modal.type==="addDocument"&&<>
+              <div className="modal-title">📁 Add Document</div>
+              <div style={{display:"grid",gap:12}}>
+                <input className="input" placeholder="Document Name * (e.g. Report.pdf)" value={form.name||""} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <select className="input" value={form.category||""} onChange={e=>setForm({...form,category:e.target.value})}>
+                  <option value="">Category</option>{DOC_CATS.map(c=><option key={c}>{c}</option>)}
+                </select>
+                <input className="input" placeholder="File size (e.g. 1.2 MB)" value={form.size||""} onChange={e=>setForm({...form,size:e.target.value})}/>
+                <input className="input" placeholder="Uploader name" value={form.uploader||""} onChange={e=>setForm({...form,uploader:e.target.value})}/>
+                <input className="input" placeholder="Download URL (optional)" value={form.url||""} onChange={e=>setForm({...form,url:e.target.value})}/>
+                <div style={{fontSize:11,color:"#555",lineHeight:1.6}}>💡 Upload to Google Drive → Share → "Anyone with link" → paste URL here.</div>
+                <MA onCancel={closeModal} onOk={()=>form.name&&addRec("documents",{name:form.name,category:form.category,size:form.size,uploader:form.uploader,url:form.url||"#",uploaded:todayISO()},setDocuments)} okLabel="Add"/>
+              </div>
+            </>}
+
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PH({title,sub,action}){
+  return <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><div className="page-title">{title}</div><div className="page-sub">{sub}</div></div>{action}</div>;
+}
+function MA({onCancel,onOk,okLabel="Save",danger=false}){
+  return <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:4}}>
+    <button className="btn" style={{background:"#1a1a28",color:"#777",border:"1px solid #2a2a3a"}} onClick={onCancel}>Cancel</button>
+    <button className="btn" style={{background:danger?"#2a0808":"linear-gradient(135deg,#7c3aed,#6d28d9)",color:danger?"#f87171":"#fff"}} onClick={onOk}>{okLabel}</button>
+  </div>;
+}
+function Empty({text}){return <div style={{color:"#444",fontSize:13,padding:"28px 0",textAlign:"center"}}>{text}</div>;}
+function IB({text}){return <div style={{background:"#1a1000",border:"1px solid #3a2a00",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#f59e0b",marginBottom:16}}>{text}</div>;}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
